@@ -183,4 +183,11 @@ Power: 0w
 Done!
 ```
 
+__Video__
+
+_Below is a crapy video of it working. The controller disabling is super lame right now. It just sends a "space-bar" keypress to the
+current active window ever 0.1 seconds if you're not producing enough power. THe effect of this is the controller becomes unusable for a second or two then you can usually fight it to get controll back. But then it goes away again. So it's not really "disabling" the controller so much as it's making the input unreliable and impossible to play. I have no idea how this approach will work in other games. See the "Tested Games" section above._
+
+https://photos.google.com/share/AF1QipMZrxiWGNAzumDCIXfNrvIiufT52fJK_yzeRSC2E_es0dKUwOhIgbzgIyOGYYY4-Q/photo/AF1QipNoT4SW6WumqlrH6mLreJdEzsrbEo0f1s9jYzLY?key=WUpEWl9EYlBITkFmMXpFX0Y4cDJrUW5OR2RWTVNn
+
 Happy peddling.
