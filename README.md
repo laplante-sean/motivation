@@ -27,4 +27,4 @@ _Currently only support 1 smart trainer. Will need contributions and testing fro
 1. Run `pip install -r requirements.txt`
 1. Run `python motivation.py -h`
 
-Happy peddling. 
+Happy peddling.
