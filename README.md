@@ -1,6 +1,6 @@
 # Motivation
 
-So you wanna play video games and get fit? But you want to play real video games because fitness video games get old too fast. Well if you have a supported smart trainer, now you can!
+So you wanna play video games and get fit, but you want to play real video games because fitness video games get old too fast? Well if you have a supported smart trainer, now you can!
 
 "Motivation" is Stationary Bike "Smart" trainer gaming motivator. It connects to Bluetooth Low-Energy (LE) smart trainers and disables your game controller if you drop below a configured power output.
 
