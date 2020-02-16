@@ -13,7 +13,7 @@ So you wanna play video games and get fit, but you want to play real video games
 
 ## Support
 
-_Currently only support 1 smart trainer. Will need contributions and testing from community to add support for others. (b/c I can't afford to buy them all._
+_Currently only support 1 smart trainer. Will need contributions and testing from community to add support for others. (I can't afford to buy them all)_
 
 1. Wahoo Kickr SNAP
 
