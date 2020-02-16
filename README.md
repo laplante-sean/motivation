@@ -21,6 +21,10 @@ _Currently only support 1 smart trainer. Will need contributions and testing fro
 
 1. Halo Reach from the Master Chief Collection
 
+## Tested controllers
+
+1. XBox 360 Controller connected to PC with the USB XBox 360 Wireless dongle thing.
+
 ## Setup
 
 1. Clone repo
