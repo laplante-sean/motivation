@@ -39,15 +39,29 @@ class WahooKickrSnap(SmartTrainer):
     def __init__(self, power_tracker, client):
         super().__init__(power_tracker, client)
 
-    def notification_handler(self, sender, data):
+    def notification_handler(self, char_uuid, data):
         '''
         Simple notification handler which prints the data received.
         '''
-        service_desc = self.client.NOTIF_LOOKUP.get(sender, "Unknown Service")
-        fmt_data = " ".join("%02x".upper() % b for b in data)
-        print(f"{service_desc}: {fmt_data}")
+        try:
+            self._handle_notification(char_uuid, data)
+        except Exception as e:
+            # B/c otherwise the exception would be lost
+            print(f"Failed to handle notification from {char_uuid}: {e}")
 
-        if "cycling power" in service_desc.lower().strip():
+    def _handle_notification(self, char_uuid, data):
+        '''
+        Internal method used to handle the notification
+        '''
+        service = self.client.get_service_with_characteristic(char_uuid)
+        if service is None:
+            print(f"{char_uuid} is not a valid sender!")
+            return
+
+        fmt_data = " ".join("%02x".upper() % b for b in data)
+        print(f"{service.description}: {fmt_data}")
+
+        if "cycling power" in service.description.lower().strip():
             if len(data) < POWER_STRUCT_SIZE:
                 print(f"Not enough data to unpack")
             else:

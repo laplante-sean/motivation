@@ -16,6 +16,7 @@ from bleak.exc import BleakError
 from motivation.loader import TrainerPluginLoader
 from motivation.controller import disable_controller
 from motivation.power import PowerTracker
+from motivation.gatt import GATTDevice, GATTCharacteristic, GATTDescriptor, GATTService
 
 
 class BLEClientConnectionFailed(Exception):
@@ -30,53 +31,67 @@ class BLEClient:
     '''
     Acts as a client. Connects to a server, subscribes to events, etc...
     '''
-    NOTIFICATION_UUIDS = None
-    NOTIF_LOOKUP = None
 
-    def __init__(self, uuid, address, power_tracker, timeout=10, debug=False):
-        self.uuid = uuid
-        self.address = address
+    def __init__(self, device, power_tracker, timeout=10, debug=False):
+        self.device = device
         self.timeout = timeout
         self.power_tracker = power_tracker
         self.debug = debug
         self.loop = asyncio.get_event_loop()
+        self.services = []
 
-        self.NOTIFICATION_UUIDS = {}
-        self.NOTIF_LOOKUP = {}
+        # Technically this is a list, but we only care about the first UUID maybe?
+        try:
+            uuid = self.device.metadata.get("uuids", [])[0]
+        except IndexError:
+            raise UnsupportedTrainer()
 
+        # Setup the trainer for this client
         loader = TrainerPluginLoader.get()
-        trainer_cls = loader.get_by_uuid(self.uuid)
+        trainer_cls = loader.get_by_uuid(uuid)
         if trainer_cls is None:
             raise UnsupportedTrainer()
         self.trainer = trainer_cls(self.power_tracker, self)
+
+    def get_service_with_characteristic(self, char_uuid):
+        for service in self.services:
+            char = service.get_characteristic(char_uuid)
+            if char:
+                return service
+        return None
 
     def run(self):
         '''
         Run the client
         '''
-        self.loop.run_until_complete(self._run())
+        try:
+            self.loop.run_until_complete(self._run())
+        except BleakError:
+            raise BLEClientConnectionFailed()
 
     async def _run(self):
         '''
         Connect to a chosen device
         '''
-        async with BleakClient(self.address, loop=self.loop, timeout=self.timeout) as client:
+        async with BleakClient(self.device.address, loop=self.loop, timeout=self.timeout) as client:
+            # Make sure we're connected
             is_connected = await client.is_connected()
             if not is_connected:
                 raise BLEClientConnectionFailed()
 
-            await self._parse_services(client)
+            # Parse the services and populate self.services
+            for service in client.services:
+                gatt_service = GATTService(client, service)
+                await gatt_service.parse()
+                self.services.append(gatt_service)
 
-            for val in NOTIFICATION_UUIDS.values():
-                if self.debug:
-                    print(f"Enabling notifications for service {val['service_description']}")
+                # Setup handlers for all notifications
+                await gatt_service.notify(self.trainer.notification_handler)
 
-                for notif in val["notifications"]:
-                    try:
-                        await client.start_notify(notif, self.trainer.notification_handler)
-                    except AttributeError:
-                        print(f"Could not enable notifications for {notif}")
-                        continue
+            if self.debug:
+                for service in self.services:
+                    print(service.print_service())
+                    print("")  # For the newline
 
             try:
                 # Run the main loop
@@ -97,48 +112,8 @@ class BLEClient:
 
             print("Stopping notifications. Please wait (don't hit cntrl-c again dummy, we're working on it)...")
 
-            for key in NOTIF_LOOKUP.keys():
-                await client.stop_notify(key)
-
-    async def _parse_services(self, client):
-        '''
-        Setup notification handlers for all notification services
-        '''
-        for service in client.services:
-            if self.debug:
-                print(f"\n[Service] {service.uuid}: {service.description}")
-
-            for char in service.characteristics:
-                if "read" in char.properties:
-                    try:
-                        value = bytes(await client.read_gatt_char(char.uuid))
-                    except Exception as e:
-                        value = str(e).encode()
-                else:
-                    value = None
-
-                if "notify" in char.properties:
-                    # This is something we can recieve notifications about.
-                    if service.uuid not in NOTIFICATION_UUIDS:
-                        NOTIFICATION_UUIDS[service.uuid] = {
-                            "service_description": service.description,
-                            "notifications": []
-                        }
-
-                    NOTIF_LOOKUP[char.uuid] = service.description
-                    NOTIFICATION_UUIDS[service.uuid]["notifications"].append(char.uuid)
-
-                if self.debug:
-                    print(f"\t[Char] {char.uuid}: ({','.join(char.properties)}) | Name: {char.description}, Value: {value}")
-
-                for descriptor in char.descriptors:
-                    value = await client.read_gatt_descriptor(descriptor.handle)
-
-                    if self.debug:
-                        print(f"\t\t[Descriptor] {descriptor.uuid}: (Handle: {descriptor.handle}) | Value: {bytes(value)} ")
-
-        if self.debug:
-            print("")  # Add a newline for easy readin'
+            for service in self.services:
+                await service.stop_notify()
 
 
 class BLEScanner:
@@ -168,20 +143,18 @@ class BLEScanner:
         for d in devices:
             supported = False
 
-            if self.debug:
-                print(f"Found device: {d.name}")
-                print(f"\tAddress: {d.address}")
-                print(f"\tDetails: {d.details}")
-                print(f"\tMetadata: {d.metadata}")
-
             uuids = d.metadata.get("uuids", [])
             for uuid in uuids:
                 if loader.is_supported_device(uuid):
-                    ret_devices.append(d)
+                    dev = GATTDevice(uuid, d)
+                    ret_devices.append(dev)
                     supported = True
+
+                    if self.debug and supported:
+                        print(str(dev))
                     break
 
             if self.debug and not supported:
-                print(f"Device: {d.name} is not supported.")
+                print(f"Found unsupported device: {d.name}")
 
         return ret_devices

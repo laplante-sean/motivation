@@ -8,7 +8,7 @@ import logging
 import argparse
 import traceback
 
-from motivation.ble import BLEScanner, BLEClient
+from motivation.ble import BLEScanner, BLEClient, BLEClientConnectionFailed
 from motivation.power import RawPowerTracker, AveragePowerTracker
 
 
@@ -110,14 +110,13 @@ def main_cli():
     device = select_device(scanner)
 
     # Run the ble code
-    client = BLEClient(device.metadata.get("uuids")[0], device.address, tracker, args.timeout, args.debug)
-    client.run()
-    '''
-    address = device.address
-    success = loop.run_until_complete(run_client(tracker, address, loop, timeout=args.timeout))
-    if not success:
+    client = BLEClient(device, tracker, args.timeout, args.debug)
+
+    try:
+        client.run()
+    except BLEClientConnectionFailed:
+        print(f"Failed to connect to device {device.name} ({device.address}). Try again with a longer timeout.")
         sys.exit(1)
-    '''
 
 
 if __name__ == "__main__":
