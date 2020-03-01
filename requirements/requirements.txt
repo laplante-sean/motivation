@@ -1,0 +1,3 @@
+pywin32==224
+bleak==0.5.1
+cincoconfig==0.2.1

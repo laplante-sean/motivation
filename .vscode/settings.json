@@ -1,0 +1,7 @@
+{
+    "python.pythonPath": "d:\\Documents\\GitRepo\\motivation\\venv\\Scripts\\python.exe",
+    "trailing-spaces.trimOnSave": true,
+    "editor.renderWhitespace": "all",
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true
+}
