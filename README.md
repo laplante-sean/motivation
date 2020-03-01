@@ -29,27 +29,33 @@ _Currently only support 1 smart trainer. Will need contributions and testing fro
 
 1. Clone repo
 1. Run `pip install -r requirements.txt`
-1. Run `python motivation.py -h`
+1. Run `python -m motivation.cli -h`
 
 ### Usage
 
 ```
-usage: Wahoo Gaming [-h] [-d] [-t TIMEOUT] -p POWER_THRESHOLD
+usage: Fit Gaming Motivation! [-h] [-t TIMEOUT] [-w WRITE_OUT] [-d] [-v]
+                              (-p POWER_THRESHOLD | -a AVERAGE_POWER)
 
-Wahoo Kickr Gaming Motivation App
+Keeps you motivated while gaming or you can't game.
 
 optional arguments:
   -h, --help            show this help message and exit
-  -d, --debug           Enable debugging
   -t TIMEOUT, --timeout TIMEOUT
                         Connection timeout
+  -w WRITE_OUT, --write-out WRITE_OUT
+                        Record raw data in this directory
+  -d, --debug           Enable debug logging to stdout
+  -v, --verbose         More output. This will include Bleak library output.
   -p POWER_THRESHOLD, --power-threshold POWER_THRESHOLD
                         Under this value you can't play games
+  -a AVERAGE_POWER, --average-power AVERAGE_POWER
+                        Under this average power or you can't play
 ```
 
 ### Example
 
-* `python motivation.py -t 10 -p 150`
+* `python -m motivation.cli -t 10 -p 150`
     * Wait 10 seconds for pairing and only enable controller at or above 150 Watt power output.
     * Press `cntrl-c` to quit. Make sure to only hit it once so it can cleanup the notification handlers.
 
